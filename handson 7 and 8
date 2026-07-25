@@ -1,0 +1,251 @@
+npm install -g @angular/cli
+ng new student-portal-angular --routing --style=css
+cd student-portal-angular
+ng serve
+
+
+ng generate component header
+ng generate component course-list
+ng generate component course-card
+ng generate component student-profile
+ng generate service course
+
+
+
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+
+import { CourseListComponent } from './course-list/course-list.component';
+import { StudentProfileComponent } from './student-profile/student-profile.component';
+
+const routes: Routes = [
+  { path: '', component: CourseListComponent },
+  { path: 'profile', component: StudentProfileComponent }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule {}
+
+
+<app-header></app-header>
+
+<router-outlet></router-outlet>
+
+
+
+
+
+import { Component, Input } from '@angular/core';
+
+@Component({
+  selector: 'app-course-card',
+  templateUrl: './course-card.component.html'
+})
+
+export class CourseCardComponent {
+
+@Input() name!: string;
+
+@Input() code!: string;
+
+@Input() credits!: number;
+
+@Input() grade!: string;
+
+}
+
+
+
+<div class="card">
+
+<h3>{{name}}</h3>
+
+<p>{{code}}</p>
+
+<p>Credits : {{credits}}</p>
+
+<p>Grade : {{grade}}</p>
+
+</div>
+
+
+
+
+import { Component, OnInit } from '@angular/core';
+
+import { CourseService } from '../course.service';
+
+@Component({
+selector:'app-course-list',
+templateUrl:'./course-list.component.html'
+})
+
+export class CourseListComponent implements OnInit{
+
+courses:any=[];
+
+searchTerm="";
+
+loading=false;
+
+constructor(private courseService:CourseService){}
+
+ngOnInit(){
+
+this.loading=true;
+
+this.courseService.getCourses().subscribe(data=>{
+
+this.courses=data;
+
+this.loading=false;
+
+});
+
+}
+
+}
+
+
+
+import { createRouter, createWebHistory } from 'vue-router'
+
+import HomeView from '../views/HomeView.vue'
+import CoursesView from '../views/CoursesView.vue'
+import CourseDetailView from '../views/CourseDetailView.vue'
+import ProfileView from '../views/ProfileView.vue'
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    { path: '/', component: HomeView },
+    { path: '/courses', component: CoursesView },
+    { path: '/courses/:id', component: CourseDetailView },
+    { path: '/profile', component: ProfileView }
+  ]
+})
+
+router.beforeEach((to, from, next) => {
+  console.log("Navigating to:", to.path)
+  next()
+})
+
+export default router
+
+
+
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+
+export const useEnrollmentStore = defineStore('enrollment', () => {
+
+  const enrolledCourses = ref([])
+
+  const totalCredits = computed(() =>
+    enrolledCourses.value.reduce((sum, c) => sum + c.credits, 0)
+  )
+
+  function enroll(course) {
+    enrolledCourses.value.push(course)
+  }
+
+  function unenroll(id) {
+    enrolledCourses.value =
+      enrolledCourses.value.filter(c => c.id !== id)
+  }
+
+  return {
+    enrolledCourses,
+    totalCredits,
+    enroll,
+    unenroll
+  }
+})
+
+
+
+
+<script setup>
+
+import { useEnrollmentStore } from '../stores/enrollment'
+
+const store = useEnrollmentStore()
+
+</script>
+
+<template>
+
+<nav>
+
+<RouterLink to="/">Home</RouterLink>
+
+<RouterLink to="/courses">Courses</RouterLink>
+
+<RouterLink to="/profile">Profile</RouterLink>
+
+<span>
+Enrolled : {{store.enrolledCourses.length}}
+</span>
+
+</nav>
+
+</template>
+
+
+
+<script setup>
+
+import { useEnrollmentStore } from '../stores/enrollment'
+
+const store = useEnrollmentStore()
+
+</script>
+
+<template>
+
+<nav>
+
+<RouterLink to="/">Home</RouterLink>
+
+<RouterLink to="/courses">Courses</RouterLink>
+
+<RouterLink to="/profile">Profile</RouterLink>
+
+<span>
+Enrolled : {{store.enrolledCourses.length}}
+</span>
+
+</nav>
+
+</template>
+
+
+
+<script setup>
+
+import { useEnrollmentStore } from '../stores/enrollment'
+
+const store = useEnrollmentStore()
+
+</script>
+
+<template>
+
+<h2>Enrolled Courses</h2>
+
+<div
+v-for="course in store.enrolledCourses"
+:key="course.id">
+
+{{course.name}}
+
+</div>
+
+<h3>
+Total Credits : {{store.totalCredits}}
+</h3>
+
+</template>
